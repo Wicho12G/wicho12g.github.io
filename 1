@@ -1,0 +1,37 @@
+import requests
+from bs4 import BeautifulSoup
+import re
+
+def analyze_amazon_product(url):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Extraer título
+    title = soup.find('span', {'id': 'productTitle'}).text.strip() if soup.find('span', {'id': 'productTitle'}) else 'No encontrado'
+    
+    # Extraer precio
+    price = soup.find('span', {'class': 'a-price-whole'}).text if soup.find('span', {'class': 'a-price-whole'}) else 'No encontrado'
+    
+    # Extraer ASIN
+    asin = re.search(r'/dp/([A-Z0-9]{10})', url)
+    asin = asin.group(1) if asin else 'No encontrado'
+    
+    # Extraer ranking de ventas (esto es una aproximación y puede no ser preciso)
+    sales_rank = soup.find('li', text=re.compile('Best Sellers Rank'))
+    sales_rank = sales_rank.text.split(':')[1].split('(')[0].strip() if sales_rank else 'No encontrado'
+    
+    return {
+        'title': title,
+        'price': price,
+        'asin': asin,
+        'sales_rank': sales_rank
+    }
+
+# Ejemplo de uso
+url = 'https://www.amazon.com/dp/B08F7N8PDP'  # Reemplaza con la URL del producto que quieras analizar
+result = analyze_amazon_product(url)
+print(result)
